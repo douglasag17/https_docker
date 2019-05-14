@@ -1,0 +1,160 @@
+<h2 class='vertical'> Route with your points </h2>
+{{#if points}}
+
+  <!-- Display Map -->
+  <div id="map"></div>
+
+  <form action="/points/new-route" method="post">
+    <div class="form-group mt-4" style="text-align: center;">
+      <!-- Button trigger modal -->
+      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter" style='width:370px; height:45px; display: block; margin: 0 auto; '>
+        Share Route
+      </button>
+      <!-- Modal -->
+      <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title" id="exampleModalLongTitle">Share Route</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <input type="text" name="name" class="form-control" placeholder="Name of the route" autofocus id="nameRoute"/>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <button class="btn btn-primary" type="submit" id="arrRoute" name="route">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+  
+  <div class="row">
+    {{#each points}}
+      <div class="col-md-4 mt-4 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <script>
+              var summaryPanel = document.getElementById('title');
+              summaryPanel.innerHTML = 'Marker: ' + 'A';
+            </script>
+            <h5 id="title">  </h5>
+            <h5> Latitude: {{ latitude }} </h5>
+            <h5> Longitude: {{ longitude }}</h5>
+            <h5>Date: {{ date }} </h5>
+            <h5>User: {{ user }} </h5>
+            <!-- EDIT REQUEST -->
+            <form action="/points/edit/{{_id}}" method="GET">
+              <input type="hidden" name="_method" value="EDIT">
+              <button type="submit" class="btn btn-primary btn-block btn-sm">Edit</button>
+            </form>
+            <!-- DELETE REQUEST -->
+            <form action="/points/delete/{{_id}}?_method=DELETE" method="POST">
+              <input type="hidden" name="_method" value="DELETE">
+              <button type="submit" class="btn btn-danger btn-block btn-sm mt-2">Delete</button>
+            </form>
+            
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+
+  <!--- Java Scripts for Display points in the Map  -->
+  <script>
+    var puntos1 = new Array
+  </script>
+  {{#each points}}
+    <script>
+      puntos1.push( {{latitude}} )
+      puntos1.push( {{longitude}} )
+    </script>
+  {{/each}}
+  <script>
+    document.getElementById("arrRoute").value = puntos1
+    var map
+    function initMap() { 
+      var posMap = {lat: puntos1[0], lng: puntos1[1]};
+      map = new google.maps.Map(document.getElementById('map'), {
+          center: posMap,
+          zoom: 15
+      });
+      // Adds a marker to the map.
+      //function addMarker(location, map, title) {
+      //  var marker = new google.maps.Marker({
+      //    position: location,
+      //    map: map,
+      //    title: title
+      //  })
+      //}
+      //for (var i = 0; i < puntos1.length-1; i++) {
+      //  var title = puntos1[i] + ", " + puntos1[i+1]
+      //  addMarker( {lat: puntos1[i], lng: puntos1[i+1]} , map, title)
+      //}
+      
+      // Routes
+      
+      // Instantiate a directions service.
+      var directionsService = new google.maps.DirectionsService;
+      // Create a renderer for directions and bind it to the map.
+      var directionsDisplay = new google.maps.DirectionsRenderer({
+        //draggable: true,
+        map: map
+      });
+      // Display the route between the initial start and end selections.
+      calculateAndDisplayRoute(directionsDisplay, directionsService, puntos1, map);
+      // Listen to change events from the start and end lists.
+      var onChangeHandler = function() {
+        calculateAndDisplayRoute(directionsDisplay, directionsService, markerArray, map);
+      }     
+
+      function calculateAndDisplayRoute(directionsDisplay, directionsService, markerArray, map) {
+        // Retrieve the start and end locations and create a DirectionsRequest using
+        // WALKING directions.
+        var waypts = []
+        for (var i = 2; i < puntos1.length-2; i++) {
+          waypts.push(puntos1[i])
+        }
+        var waypts1 = []
+        for (var i = 0; i < waypts.length; i+=2) {
+          waypts1.push({
+            location: new google.maps.LatLng(waypts[i], waypts[i+1]),
+            stopover: true
+          });
+        }
+
+        directionsService.route({
+          origin: {lat: puntos1[0], lng: puntos1[1]},
+          destination: {lat: puntos1[ puntos1.length-2 ], lng: puntos1[ puntos1.length-1 ]},
+          waypoints: waypts1,
+          optimizeWaypoints: true,
+          travelMode: 'WALKING'
+        }, function(response, status) {
+          // Route the directions and pass the response to a function to create
+          // markers for each step.
+          if (status === 'OK') {
+            directionsDisplay.setDirections(response);
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+      }
+
+    }
+  </script>
+
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCLfvcsagRYKp9CgzE3Uq2FRJLk-YnTvZI&callback=initMap"> </script>
+
+{{else}}
+  <div class="card mx-auto mt-4 mb-4">
+    <div class="card-body text-center">
+      <h1>Hello {{user.name}}</h1>
+      <h3 clsss="lead">There are not Points yet</h3>
+      <a href="/points/add" class="btn btn-success">Create One</a>
+    </div>
+  </div>
+{{/if}}

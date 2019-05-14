@@ -1,0 +1,73 @@
+<h2 class='vertical'> Edit Point </h2>
+{{#each errors}}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  {{text}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{{/each}}
+
+<div class="col-md-5 mx-auto">
+  <div class="card text-center">
+    <div class="card-header">
+      <h3>Edit Point</h3>
+    </div>
+    <div class="card-body">
+      <form action="/points/edit-point/{{point._id}}?_method=PUT" method="POST">
+        <input type="hidden" name="_method" value="PUT">
+        <div class="form-group">
+          <input type="text" name="latitude" class="form-control" value="{{point.latitude}}" id="lat"/>
+        </div>
+        <div class="form-group">
+          <input type="text" name="longitude" class="form-control" value="{{point.longitude}}" id="lng"/>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary btn-block" type="submit">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<h4>Move the pin to select a point</h4>
+
+<!-- Display Map -->
+<div id="map"></div>
+
+<!--- Java Scripts for Map  --->
+<script> 
+  function initMap(){    
+
+      var latitude = {{point.latitude}}
+      var longitude = {{point.longitude}}
+      var posMap = {lat: latitude, lng: longitude};
+      map = new google.maps.Map(document.getElementById('map'), {
+          center: posMap,
+          zoom: 15
+      });
+      var marker = new google.maps.Marker({
+        position: posMap, 
+        map: map, 
+        draggable: true
+      });
+
+      google.maps.event.addListener(marker,'dragend',function(event) {
+        var latitude = marker.getPosition().toString()
+        latitude = latitude.split(',',1).toString()
+        latitude = latitude.substring(1)
+
+        var longitude = marker.getPosition().toString()
+        var pos = longitude.indexOf(',')
+        longitude = longitude.substring(pos+2).split(')',1).toString()
+
+        document.getElementById("lat").value = latitude
+        document.getElementById("lng").value = longitude
+      });
+    google.maps.event.addDomListener(window, 'load', initialize);  
+  } 
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCLfvcsagRYKp9CgzE3Uq2FRJLk-YnTvZI&callback=initMap"> </script>
